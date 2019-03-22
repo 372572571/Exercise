@@ -33,15 +33,22 @@ func (server *Server) Registered(id, function interface{}) bool {
 
 // callSelf 调用自己的方法并调用，结果传入
 func (server *Server) callSelf(info *CallInfo) {
-	f := server.function[info.id]   // 根据id查找注册的方法
+
+	defer func(info *CallInfo) {
+		if err := recover(); err != nil { // 错误处理 崩溃处理 ()
+			PipeReturnError(info, ErrNotFindFunc)
+		}
+	}(info)
+
 	res := &Result{call: info.call} // 创建结果信息结构
+	f := server.function[info.id]   // 根据id查找注册的方法
 	switch f.(type) {               // 类型推断并执行
 	case func([]interface{}) error:
-		res.err = f.(func([]interface{}) error)(info.args)
+		res.Err = f.(func([]interface{}) error)(info.args)
 	case func([]interface{}) ([]interface{}, error):
-		res.data, res.err = f.(func([]interface{}) ([]interface{}, error))(info.args)
+		res.data, res.Err = f.(func([]interface{}) ([]interface{}, error))(info.args)
 	default:
-		res.err = ErrNotFindFunc // 没有对应类型输出对应错误,并处理
+		res.Err = ErrNotFindFunc // 没有对应类型输出对应错误,并处理
 	}
 
 	// 判断同步流程，异步流程
@@ -50,7 +57,7 @@ func (server *Server) callSelf(info *CallInfo) {
 		case info.result <- res: // 异步分支
 		default: // 意外流程处理
 			res = &Result{call: info.call}
-			res.err = ErrAsyncPush
+			res.Err = ErrAsyncPush
 			info.result <- res
 		}
 	} else {
@@ -70,4 +77,9 @@ func (server *Server) Run() {
 			}(data)
 		}
 	}()
+}
+
+// Fast 快速调用服务
+func (server *Server) Fast(id interface{}, args []interface{}) {
+	// fun := server.function[id]
 }

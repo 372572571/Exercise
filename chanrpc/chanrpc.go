@@ -12,6 +12,6 @@ type CallInfo struct {
 // Result 用于存放调用服务后,返回的数据
 type Result struct {
 	data []interface{} // 存放服务返回数据
-	err  error         // 错误信息存放
+	Err  error         // 错误信息存放
 	call interface{}   // 回调函数
 }

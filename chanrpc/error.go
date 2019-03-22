@@ -13,3 +13,10 @@ var ErrAsyncPush = errors.New(NAME + ": Async chan push error.")
 
 // ErrCallBackType 错误的回调类型
 var ErrCallBackType = errors.New(NAME + ": error callBack type.")
+
+// PipeReturnError 管道推入错误
+func PipeReturnError(info *CallInfo, err error) {
+	errRes := &Result{call: info.call}
+	errRes.Err = err
+	info.result <- errRes
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"time"
+
 	"github.com/372572571/Exercise/chanrpc"
 )
 
@@ -26,8 +27,12 @@ func Example() {
 	})
 	client.Request("T", []interface{}{1, 2, 3, 5, 6}, func(res *chanrpc.Result) {
 		fmt.Println(res, "回调")
+		var t []byte
+		f:=t[0]
+		fmt.Println(f)
+
 	})
-	time.Sleep(5 * time.Second)
+	time.Sleep(1 * time.Second)
 	client.AsyncRun()
 	var a string
 
