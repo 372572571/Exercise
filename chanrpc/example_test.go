@@ -12,9 +12,8 @@ import (
 func Example() {
 	server := chanrpc.NewServer(10)
 	server.Registered("T", func(args []interface{}) ([]interface{}, error) {
-		arr := []interface{}{1, 2, 3}
 		fmt.Println(args)
-		return arr, nil
+		return args, nil
 	})
 
 	server.Run()
@@ -27,10 +26,10 @@ func Example() {
 	})
 	client.Request("T", []interface{}{1, 2, 3, 5, 6}, func(res *chanrpc.Result) {
 		fmt.Println(res, "回调")
-		var t []byte
-		f:=t[0]
-		fmt.Println(f)
-
+	})
+	client.Request("k", []interface{}{1, 2, 3, 5, 6}, func(res *chanrpc.Result) {
+		fmt.Println(res, "回调k")
+		fmt.Println(res.Err) // 错误输出
 	})
 	time.Sleep(1 * time.Second)
 	client.AsyncRun()
@@ -45,7 +44,6 @@ func Example() {
 			os.Exit(0)
 		}
 	}
-
 }
 
 // GetCurrentPath 获取当前程序运行路径
