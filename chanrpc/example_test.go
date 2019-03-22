@@ -2,14 +2,14 @@ package chanrpc_test
 
 import (
 	"fmt"
-	"os"
+	"testing"
 	"time"
 
 	"github.com/372572571/Exercise/chanrpc"
 )
 
-// Example单元测试
-func Example() {
+// Example单元测试 go test example_test.go
+func TestChanrpc(t *testing.T) {
 	server := chanrpc.NewServer(10)
 	server.Registered("T", func(args []interface{}) ([]interface{}, error) {
 		fmt.Println(args)
@@ -33,17 +33,17 @@ func Example() {
 	})
 	time.Sleep(1 * time.Second)
 	client.AsyncRun()
-	var a string
+	// var a string
 
-	for {
-		i, err := fmt.Scan(&a)
-		fmt.Println(i)
-		fmt.Println(err)
-		fmt.Println(a)
-		if a == "exit" {
-			os.Exit(0)
-		}
-	}
+	// for {
+	// 	i, err := fmt.Scan(&a)
+	// 	fmt.Println(i)
+	// 	fmt.Println(err)
+	// 	fmt.Println(a)
+	// 	if a == "exit" {
+	// 		os.Exit(0)
+	// 	}
+	// }
 }
 
 // GetCurrentPath 获取当前程序运行路径
