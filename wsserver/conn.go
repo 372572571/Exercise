@@ -61,18 +61,6 @@ func NewWsConn(chanWriteLength int, conn *websocket.Conn, maxMessageLength int64
 	return wsc
 }
 
-// RunWrite ...(线程阻塞循环)
-// 实现创建携程监听链接写入管道,有数据就发送给客户 发生意外后关闭链接
-func (wsc *WsConn) runWrite() bool {
-	wsc.Lock()       // 同步锁
-	if wsc.isWrite { // 如果写入管道已经被开启过
-		return false
-	}
-	wsc.isWrite = true // 表示写入监听已开启
-	wsc.Unlock()       // 解锁
-	return true
-}
-
 // ReadMsg ... 读取客户发来的信息
 func (wsc *WsConn) ReadMsg() ([]byte, error) {
 	_, b, err := wsc.conn.ReadMessage()
@@ -82,7 +70,8 @@ func (wsc *WsConn) ReadMsg() ([]byte, error) {
 // Close ...
 func (wsc *WsConn) Close() {
 	wsc.conn.Close()
-	// wsc.Lock()
-	// wsc.isClose = true
-	// wsc.Unlock()
+	wsc.Lock()
+	wsc.isClose = true
+	close(wsc.write) // 释放管道
+	wsc.Unlock()
 }
