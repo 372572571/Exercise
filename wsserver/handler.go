@@ -1,6 +1,7 @@
 package wsserver
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -35,14 +36,26 @@ type WsHandler struct {
 	NewAgent           func(*WsConn) Agent // 根据包装的链接创建一个代理人
 	tempUserConns      TempUserConns       // 临时客户队列
 	userConns          UserConns           // 认证用户队列
+	wg                 sync.WaitGroup
 }
 
 // NewHandler ...
 func NewHandler(agentfunc func(*WsConn) Agent) *WsHandler {
-	var h = new(WsHandler)
-	h.NewAgent = agentfunc
-	h.tempUserConns = make(TempUserConns)
-	h.userConns = make(UserConns)
+	var h = &WsHandler{
+		NewAgent:      agentfunc,
+		tempUserConns: make(TempUserConns),
+		userConns:     make(UserConns),
+		upHTTPToConn: websocket.Upgrader{
+			// HandshakeTimeout: time.Duration(5) * time.Second,
+			CheckOrigin: func(_ *http.Request) bool { return true },
+		},
+	}
+	// h.NewAgent = agentfunc
+	// h.tempUserConns = make(TempUserConns)
+	// h.userConns = make(UserConns)
+	// h.upHTTPToConn = websocket.Upgrader{
+	// 	CheckOrigin: func(_ *http.Request) bool { return true },
+	// }
 	return h
 }
 
@@ -51,21 +64,27 @@ func NewHandler(agentfunc func(*WsConn) Agent) *WsHandler {
 // 	ServeHTTP(ResponseWriter, *Request)
 // }
 func (wsh *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" { // 如果是GET 请求直接拒绝
+	fmt.Println("一个链接尝试进入")
+	if r.Method != "GET" { // 如果是GET 请求直接拒绝
 		return
 	}
 	con, err := wsh.upHTTPToConn.Upgrade(w, r, nil) // 升级链接
 	if err != nil {
+		fmt.Println("链接发生错误", err)
 		return // 如果升级链接发生错误
 	}
-	if wsh.maxConnNum > len(wsh.tempUserConns) { // 判断当前最大链接数量是否超出
+	if wsh.maxConnNum < len(wsh.tempUserConns) { // 判断当前最大链接数量是否超出
+		fmt.Println("最大链接数")
 		con.Close()
 		return
 	}
+
+	con.SetReadLimit(wsh.maxMessageLength)
 	wsh.SetTempConn(con)                                                   // 把链接丢入零食用户列表
 	var wsc = NewWsConn(wsh.writeContentLength, con, wsh.maxMessageLength) // 创建一个WsConn并创建一个线程监听写 chan
 	var agent = wsh.NewAgent(wsc)                                          // 创建一个用户代理人
-	agent.StartRead()                                                      // 开始阻塞
+	fmt.Println("请求")
+	agent.StartRead() // 开始阻塞
 
 	//  阻塞结束 清理链接
 	wsh.CleanAgent(agent)
@@ -76,14 +95,17 @@ func (wsh *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (wsh *WsHandler) SetTempConn(con *websocket.Conn) {
 	wsh.mutexConns.Lock()
 	wsh.tempUserConns[con] = struct{}{}
+	fmt.Println("用户进入", wsh.tempUserConns)
 	wsh.mutexConns.Unlock()
 }
 
 // CleanAgent ... 清理客户链接
 func (wsh *WsHandler) CleanAgent(agent Agent) {
+	fmt.Printf("清除数据,客户离开")
 	wsh.mutexConns.Lock()
 	if agent.GetID() == 0 { // 移除链接
 		delete(wsh.tempUserConns, agent.GetConn().conn)
+		fmt.Println("临时客户", wsh.tempUserConns)
 	} else {
 		delete(wsh.userConns, agent.GetID())
 	}

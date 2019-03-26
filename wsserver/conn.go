@@ -1,6 +1,7 @@
 package wsserver
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -38,7 +39,25 @@ func NewWsConn(chanWriteLength int, conn *websocket.Conn, maxMessageLength int64
 	wsc.conn = conn
 	wsc.write = make(chan []byte, chanWriteLength)
 	wsc.maxMessageLength = maxMessageLength
-	wsc.runWrite() //开始循环监听写入管道
+	go func() { // 开启一个携程监听写管道内容
+		fmt.Printf("开始监听写入")
+		for item := range wsc.write { // 循环管道内容（如果没有内容阻塞）
+			if item == nil {
+				break // 如果读取到空结束循环
+			}
+
+			err := conn.WriteMessage(websocket.BinaryMessage, item) // 二进制写入数据 websocket.BinaryMessage
+
+			if err != nil { // 如果写入信息错误
+				break
+			}
+		}
+		conn.Close()        // 如果循环监听写入管道因为失败被打断尝试关闭链接
+		wsc.Lock()          // 同步锁
+		wsc.isClose = true  // 链接废弃
+		wsc.isWrite = false //写管道监听结束
+		wsc.Unlock()        // 解锁
+	}()
 	return wsc
 }
 
@@ -51,31 +70,19 @@ func (wsc *WsConn) runWrite() bool {
 	}
 	wsc.isWrite = true // 表示写入监听已开启
 	wsc.Unlock()       // 解锁
-	go func() {        // 开启一个携程监听写管道内容
-		for item := range wsc.write { // 循环管道内容（如果没有内容阻塞）
-			if item == nil {
-				break // 如果读取到空结束循环
-			}
-
-			err := wsc.conn.WriteMessage(websocket.BinaryMessage, item) // 二进制写入数据 websocket.BinaryMessage
-
-			if err != nil { // 如果写入信息错误
-				break
-			}
-		}
-		wsc.conn.Close()    // 如果循环监听写入管道因为失败被打断尝试关闭链接
-		wsc.Lock()          // 同步锁
-		wsc.isClose = true  // 链接废弃
-		wsc.isWrite = false //写管道监听结束
-		wsc.Unlock()        // 解锁
-	}()
 	return true
+}
+
+// ReadMsg ... 读取客户发来的信息
+func (wsc *WsConn) ReadMsg() ([]byte, error) {
+	_, b, err := wsc.conn.ReadMessage()
+	return b, err
 }
 
 // Close ...
 func (wsc *WsConn) Close() {
-	wsc.Lock()
-	wsc.isClose = true
-	wsc.Unlock()
-	wsc.Close()
+	wsc.conn.Close()
+	// wsc.Lock()
+	// wsc.isClose = true
+	// wsc.Unlock()
 }

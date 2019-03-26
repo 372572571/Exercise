@@ -30,10 +30,21 @@ type WsServer struct {
 	handler     *WsHandler    // ws处理方法
 }
 
+// NewWsServer ...
+func NewWsServer(addr string, timeout time.Duration, cert string, key string, handler *WsHandler) *WsServer {
+	var server = &WsServer{
+		Addr:        addr,
+		HTTPTimeout: timeout,
+		CertFile:    cert,
+		KeyFile:     key,
+		handler:     handler,
+	}
+	return server
+}
+
 // Start ...
 // 启动服务
-func (server *WsServer) Start(handler *WsHandler) {
-	server.handler = handler
+func (server *WsServer) Start() {
 	ln, err := net.Listen("tcp", server.Addr)
 	if err != nil {
 		fmt.Println("创建链接失败")
@@ -46,15 +57,17 @@ func (server *WsServer) Start(handler *WsHandler) {
 	var httpServer = &http.Server{
 		Addr:           server.Addr,
 		Handler:        server.handler,
-		ReadTimeout:    server.HTTPTimeout,
+		ReadTimeout:    server.HTTPTimeout, // time.Duration(5) * time.Second
 		WriteTimeout:   server.HTTPTimeout,
 		MaxHeaderBytes: 1024,
 	}
+
 	go httpServer.Serve(server.listener)
 }
 
 // 配置默认设置
 func (server *WsServer) setDefault(ln net.Listener) {
+
 	if server.handler == nil {
 		panic("handler 不能为空.")
 	}
@@ -70,6 +83,8 @@ func (server *WsServer) setDefault(ln net.Listener) {
 	if server.HTTPTimeout <= 0 {
 		server.HTTPTimeout = 10 * time.Second // 超时时间
 	}
+	server.handler.upHTTPToConn.HandshakeTimeout = server.HTTPTimeout
+
 	if server.handler.NewAgent == nil {
 		panic("server.handler.NewAgent 不能为空.")
 	}
@@ -81,7 +96,7 @@ func (server *WsServer) setDefault(ln net.Listener) {
 		config.Certificates = make([]tls.Certificate, 1)
 		config.Certificates[0], err = tls.LoadX509KeyPair(server.CertFile, server.KeyFile)
 		if err != nil {
-			log.Fatal("%v", err)
+			log.Fatal(err)
 		}
 		ln = tls.NewListener(ln, config)
 	}
