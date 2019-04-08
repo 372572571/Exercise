@@ -42,7 +42,7 @@ func (client *Client) callBack(res *Result) {
 	}
 }
 
-// Request 给服务发送请求(同步处理)
+// Request 给服务发送请求(回调模式)
 func (client *Client) Request(id interface{}, args []interface{}, callBack func(*Result)) {
 	go func() {
 		callInfo := &CallInfo{id: id, args: args, result: client.Result, call: callBack, isAsync: false}
@@ -50,6 +50,14 @@ func (client *Client) Request(id interface{}, args []interface{}, callBack func(
 		res := <-client.Result
 		client.callBack(res)
 	}()
+}
+
+// CallRequest ... 直接返回
+func (client *Client) CallRequest(id interface{}, args []interface{}) *Result {
+	callInfo := &CallInfo{id: id, args: args, result: client.Result, isAsync: false}
+	client.server.CallInfo <- callInfo
+	res := <-client.Result
+	return res
 }
 
 // AsyncRequest 异步
