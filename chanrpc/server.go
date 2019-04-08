@@ -1,9 +1,13 @@
 package chanrpc
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 // Server 一个服务类型(需求消费者)
 type Server struct {
+	sync.Mutex
 	isStart  bool                        // 是否已经启动(Run后)
 	function map[interface{}]interface{} // 存放注册方法
 	CallInfo chan *CallInfo              // 存放调用信息
@@ -68,10 +72,13 @@ func (server *Server) callSelf(info *CallInfo) {
 // Run ....开始处理 CallInfo (处理业务)
 func (server *Server) Run() {
 	// 防止重复启动
+	server.Lock()
 	if server.isStart {
+		server.Unlock()
 		return
 	}
 	server.isStart = true
+	server.Unlock()
 	go func() {
 		for {
 			data := <-server.CallInfo
@@ -102,6 +109,5 @@ func (server *Server) Fast(id interface{}, args []interface{}) *Result {
 	}()
 
 	res := <-client.Result
-	fmt.Println(res)
 	return res
 }

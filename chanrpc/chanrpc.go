@@ -15,3 +15,11 @@ type Result struct {
 	Err  error         // 错误信息存放
 	call interface{}   // 回调函数
 }
+
+// Get 根据index 获取数据
+func (r Result) Get(index int) interface{} {
+	if index >= 0 && (len(r.data)-1) >= index {
+		return r.data[index]
+	}
+	return nil
+}
