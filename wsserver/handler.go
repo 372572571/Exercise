@@ -40,14 +40,15 @@ type WsHandler struct {
 }
 
 // NewHandler ...
+// 连接后使用的方法
 func NewHandler(agentfunc func(*WsConn) Agent) *WsHandler {
 	var h = &WsHandler{
 		NewAgent:      agentfunc,
 		tempUserConns: make(TempUserConns),
 		userConns:     make(UserConns),
-		upHTTPToConn: websocket.Upgrader{
+		upHTTPToConn: websocket.Upgrader{	// http升级为ws
 			// HandshakeTimeout: time.Duration(5) * time.Second,
-			CheckOrigin: func(_ *http.Request) bool { return true },
+			CheckOrigin: func(_ *http.Request) bool { return true }, // 校验涞源
 		},
 	}
 	// h.NewAgent = agentfunc

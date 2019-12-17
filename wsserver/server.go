@@ -27,7 +27,7 @@ type WsServer struct {
 	CertFile    string        // 证书文件
 	KeyFile     string        // key文件
 	listener    net.Listener  // 监听链接
-	handler     *WsHandler    // ws处理方法
+	handler     *WsHandler    // ws处理方法(每个连接进入后执行的方法)
 }
 
 // NewWsServer ...
@@ -45,7 +45,7 @@ func NewWsServer(addr string, timeout time.Duration, cert string, key string, ha
 // Start ...
 // 启动服务
 func (server *WsServer) Start() {
-	ln, err := net.Listen("tcp", server.Addr)
+	ln, err := net.Listen("tcp", server.Addr) // 创建一个运输层 tcp 协议
 	if err != nil {
 		fmt.Println("创建链接失败")
 		return

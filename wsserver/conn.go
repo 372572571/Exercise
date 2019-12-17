@@ -3,7 +3,6 @@ package wsserver
 import (
 	"fmt"
 	"sync"
-
 	"github.com/gorilla/websocket"
 )
 
