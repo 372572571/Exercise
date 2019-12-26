@@ -37,7 +37,9 @@ func (q *Queue) Run() {
 	go func() {
 		for {
 			data := <-q.current
+			q.Lock()
 			fmt.Println(string(data))
+			q.Unlock()
 		}
 	}()
 }
