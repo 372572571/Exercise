@@ -2,7 +2,10 @@ package download
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -33,23 +36,26 @@ func NewDownloadImg(url string, size int, _path string, fix string) *DownloadImg
 // Download 下载图片并保存到目录
 func (down DownloadImg) Download() (string, error) {
 	req, err := http.NewRequest(http.MethodGet, down.Url, nil)
-	if err != nil {
-		return "", err
-	}
-	res, herr := http.DefaultClient.Do(req)
-	if herr != nil {
 
-		return "", herr
+	if err != nil {
+		return "", errors.New("创建请求失败:" + err.Error())
+	}
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return "", errors.New("发起请求失败:" + err.Error())
 	}
 	defer res.Body.Close()
-	reader := bufio.NewReaderSize(res.Body, down.Size)
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", errors.New("读取失败:" + err.Error()) //
+	}
 	file, err := os.Create(down.ResPath)
 	if err != nil {
 
-		return "", err
+		return "", errors.New("创建文件失败:" + err.Error())
 	}
 	// 获得文件的writer对象
 	writer := bufio.NewWriter(file)
-	io.Copy(writer, reader)
+	io.Copy(writer, bytes.NewReader(data)) // 数据写入
 	return down.ResPath, nil
 }

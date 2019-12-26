@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -11,6 +12,7 @@ const (
 	// UNKNOWN 未知的命令
 	UNKNOWN = "unknown"
 )
+
 // ServiceHandle ...... 处理函数
 type ServiceHandle func(*OnMsg, *Service)
 
