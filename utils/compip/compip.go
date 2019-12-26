@@ -2,9 +2,9 @@ package compip
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 
+	"github.com/372572571/Exercise/utils/message"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -34,7 +34,8 @@ type servicePoint interface {
 
 // Service 连接管道服务
 type Service struct {
-	fun map[string]interface{} // 功能方法存放容器
+	fun   map[string]interface{} // 功能方法存放容器
+	queue *message.Queue
 	// pool chan
 }
 
@@ -42,6 +43,8 @@ type Service struct {
 func NewService() *Service {
 	var s = &Service{}
 	s.fun = make(map[string]interface{})
+	s.queue = message.NewQueue(1)
+	s.queue.Run()
 	return s
 }
 
@@ -93,7 +96,7 @@ func (s *Service) echo(code int8, name string, data interface{}) {
 	info.Data = data
 	info.Service = name
 	res, _ := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(info)
-	fmt.Println(string(res))
+	s.queue.Push(res)
 }
 
 // Output 向pip输出数据

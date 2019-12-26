@@ -2,6 +2,7 @@ package tinypng
 
 import (
 	"bytes"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -54,7 +55,7 @@ func (t *TinyPng) Run() (string, error) {
 	// return
 	req, err := http.NewRequest(http.MethodPost, CompressingUrl, nil)
 	if err != nil {
-		return "", err
+		return "", errors.New("创建请求失败:" + err.Error())
 	}
 
 	// 将鉴权信息写入Request
@@ -63,20 +64,20 @@ func (t *TinyPng) Run() (string, error) {
 	// 将图片以二进制的形式写入Request
 	data, err := ioutil.ReadFile(t.Imgpath)
 	if err != nil {
-		return "", err
+		return "", errors.New("流写入文件失败:" + err.Error())
 	}
 	req.Body = ioutil.NopCloser(bytes.NewReader(data))
 
 	// 发起请求
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return "", errors.New("发起请求失败:" + err.Error())
 	}
 
 	// 解析请求
 	data, err = ioutil.ReadAll(response.Body)
 	if err != nil {
-		return "", err
+		return "", errors.New("解析失败:" + err.Error())
 	}
 	var a = &TinyInfo{}
 	var json = jsoniter.ConfigCompatibleWithStandardLibrary

@@ -1,4 +1,4 @@
-package massage
+package message
 
 import (
 	jsoniter "github.com/json-iterator/go"
