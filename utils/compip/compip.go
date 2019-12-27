@@ -67,16 +67,16 @@ func (s *Service) Unmarshal(data string) {
 	var m = &OnMsg{}
 	err := jsoniter.ConfigCompatibleWithStandardLibrary.UnmarshalFromString(data, m)
 	if err != nil {
-		s.echo(-1, UNKNOWN, "invalid json data.")
+		s.Output(-1, UNKNOWN, "invalid json data.")
 		return
 	}
 	if m.Service == "" {
-		s.echo(-1, UNKNOWN, "invalid service data.")
+		s.Output(-1, UNKNOWN, "invalid service data.")
 		return
 	}
 	f, ok := s.fun[m.Service]
 	if !ok {
-		s.echo(-1, UNKNOWN, "invalid service.")
+		s.Output(-1, UNKNOWN, "invalid service.")
 		return
 	}
 	// 强制转换
@@ -85,7 +85,7 @@ func (s *Service) Unmarshal(data string) {
 		f.(ServiceHandle)(m, s) // 执行
 		break
 	default:
-		s.echo(-1, m.Service, "service error,invalid handle.")
+		s.Output(-1, m.Service, "service error,invalid handle.")
 		return
 	}
 }

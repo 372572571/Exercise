@@ -7,9 +7,9 @@ import (
 
 // Queue 消息队列
 type Queue struct {
-	sync.Mutex
-	run     bool
-	current chan []byte
+	sync.Mutex             // 锁
+	run        bool        // 是否已经运行
+	current    chan []byte // 接收 byte数组的管道
 }
 
 // NewQueue 创建消息队列
@@ -36,8 +36,8 @@ func (q *Queue) Run() {
 	q.Unlock()
 	go func() {
 		for {
-			data := <-q.current
 			q.Lock()
+			data := <-q.current
 			fmt.Println(string(data))
 			q.Unlock()
 		}
