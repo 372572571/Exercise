@@ -27,6 +27,7 @@ type sendMsg struct {
 	Service string // 请求的服务
 	Code    int8
 	Data    interface{} // 携带的数据
+	Err     interface{} // 异常携带数据
 }
 type servicePoint interface {
 	handle(*OnMsg, *Service)
@@ -67,16 +68,16 @@ func (s *Service) Unmarshal(data string) {
 	var m = &OnMsg{}
 	err := jsoniter.ConfigCompatibleWithStandardLibrary.UnmarshalFromString(data, m)
 	if err != nil {
-		s.Output(-1, UNKNOWN, "invalid json data.")
+		s.Output(-1, UNKNOWN, m, "invalid json data.")
 		return
 	}
 	if m.Service == "" {
-		s.Output(-1, UNKNOWN, "invalid service data.")
+		s.Output(-1, UNKNOWN, m, "invalid service data.")
 		return
 	}
 	f, ok := s.fun[m.Service]
 	if !ok {
-		s.Output(-1, UNKNOWN, "invalid service.")
+		s.Output(-1, UNKNOWN, m, "invalid service.")
 		return
 	}
 	// 强制转换
@@ -85,12 +86,12 @@ func (s *Service) Unmarshal(data string) {
 		f.(ServiceHandle)(m, s) // 执行
 		break
 	default:
-		s.Output(-1, m.Service, "service error,invalid handle.")
+		s.Output(-1, m.Service, m, "service error,invalid handle.")
 		return
 	}
 }
 
-func (s *Service) echo(code int8, name string, data interface{}) {
+func (s *Service) echo(code int8, name string, data interface{}, err interface{}) {
 	var info = &sendMsg{}
 	info.Code = code
 	info.Data = data
@@ -100,6 +101,6 @@ func (s *Service) echo(code int8, name string, data interface{}) {
 }
 
 // Output 向pip输出数据
-func (s *Service) Output(code int8, name string, data interface{}) {
-	s.echo(code, name, data)
+func (s *Service) Output(code int8, name string, data interface{}, err interface{}) {
+	s.echo(code, name, data, err)
 }
