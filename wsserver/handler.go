@@ -82,7 +82,7 @@ func (wsh *WsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	con.SetReadLimit(wsh.maxMessageLength)
 	wsh.SetTempConn(con)                                                   // 把链接丢入临时用户列表
-	var wsc = NewWsConn(wsh.writeContentLength, con, wsh.maxMessageLength) // 创建一个WsConn并创建一个线程监听写 chan
+	var wsc = NewWsConn(wsh.writeContentLength, con, wsh.maxMessageLength) // 创建一个WsConn并创建一个携程监听写 chan
 	var agent = wsh.NewAgent(wsc)                                          // 创建一个用户代理人
 	fmt.Println("请求")
 	agent.StartRead() // 开始阻塞

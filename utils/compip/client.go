@@ -12,16 +12,17 @@ type Client struct {
 	sync.Mutex
 	Path      string // 可执行程序目录
 	clientCmd *exec.Cmd
+	onMassage func(string)
 }
 
 func NewClient() *Client {
 	return &Client{}
 }
 
-func (c *Client) Run(name string, arg ...string) {
-	c.clientCmd = exec.Command(name, "logcat")
-	// c.clientCmd.Args = arg
-	// c.clientCmd.Path = c.Path
+func (c *Client) Run(name string, arg []string) {
+	var args = arg
+	c.clientCmd = exec.Command(name, args...)
+	c.clientCmd.Args = arg
 
 	c.read()
 	err := c.clientCmd.Start()
@@ -47,7 +48,7 @@ func (c *Client) read() {
 	}
 	scanner := bufio.NewScanner(cmdReader)
 	go func() {
-		for scanner.Scan() {
+		for scanner.Scan() { // 
 			fmt.Printf("%s\n", scanner.Text())
 		}
 	}()
