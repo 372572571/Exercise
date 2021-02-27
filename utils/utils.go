@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 )
 
 // GetLoopbackAddress 获取本机本地地址(回环地址)
@@ -55,4 +56,19 @@ func GetIPAddress(url string) (ip string, err error) {
 	io.Copy(os.Stdout, resp.Body)
 	os.Exit(0)
 	return
+}
+
+// PathExists 判断路径下文件夹是否存在，如果不存在则创建
+func PathExists(dir string, fix string) (bool, error) {
+	dir, _ = path.Split(dir)
+	_, err := os.Stat(path.Join(dir, fix))
+	if err == nil {
+		return true, nil // 文件存在
+	}
+	if os.IsNotExist(err) {
+		// fmt.Println(path.Join(dir, fix))
+		os.Mkdir(path.Join(dir, fix), os.ModePerm)
+		return false, nil
+	}
+	return false, err
 }
