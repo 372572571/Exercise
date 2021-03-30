@@ -2,6 +2,7 @@ package compip
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 
 	"github.com/372572571/Exercise/utils/message"
@@ -54,6 +55,7 @@ func (s *Service) Open() {
 	// 接收管道消息
 	input := bufio.NewScanner(os.Stdin)
 	for input.Scan() {
+		fmt.Println(input.Text())
 		go s.Unmarshal(input.Text())
 	}
 }
