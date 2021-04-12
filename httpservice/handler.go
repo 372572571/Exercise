@@ -32,6 +32,7 @@ func newHandler() *handler {
 // ServeHTTP(ResponseWriter, *Request)
 
 func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("请求进入")
 	w.Header().Set("Access-Control-Allow-Origin", "*")             //允许访问所有域
 	w.Header().Add("Access-Control-Allow-Headers", "Content-Type") //header的类型
 	// w.Header().Set("content-type", "application/json")             //返回数据格式是json
